@@ -865,7 +865,7 @@
           </div>
           <div class="contact-item">
             <svg viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.19 18a19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.1 3.4a2 2 0 0 1 2-2H6.4a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L7.59 8.87a16 16 0 0 0 8 8l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 24 17z"/></svg>
-            +1 (800) 000-0000
+            +1 (800) 110-2020
           </div>
           <div class="contact-item">
             <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
@@ -875,44 +875,74 @@
       </div>
 
       <div class="reveal reveal-d2">
-        <div class="contact-form">
+        <!-- ── FORM STATES ── -->
+
+        <!-- Default form -->
+        <form
+          id="contact-form"
+          class="contact-form"
+          method="POST"
+          action="https://formspree.io/f/xykvaryl"
+          novalidate
+        >
+          <!-- Formspree: reply-to visitor's own email -->
+          <input type="hidden" name="_replyto" id="replyto-mirror" />
+          <!-- Formspree: custom subject line -->
+          <input type="hidden" name="_subject" value="New enquiry via Consulttica.com" />
+          <!-- Honeypot spam protection -->
+          <input type="text" name="_gotcha" style="display:none" tabindex="-1" autocomplete="off" />
+
           <div class="form-row">
             <div class="form-field">
-              <label>First Name</label>
-              <input type="text" placeholder="Jane" />
+              <label for="f-first">First Name</label>
+              <input id="f-first" type="text" name="first_name" placeholder="Jane" required />
             </div>
             <div class="form-field">
-              <label>Last Name</label>
-              <input type="text" placeholder="Smith" />
+              <label for="f-last">Last Name</label>
+              <input id="f-last" type="text" name="last_name" placeholder="Smith" required />
             </div>
           </div>
           <div class="form-field">
-            <label>Business Email</label>
-            <input type="email" placeholder="jane@company.com" />
+            <label for="f-email">Business Email</label>
+            <input id="f-email" type="email" name="email" placeholder="jane@company.com" required
+              oninput="document.getElementById('replyto-mirror').value=this.value" />
           </div>
           <div class="form-field">
-            <label>Company</label>
-            <input type="text" placeholder="Acme Corp" />
+            <label for="f-company">Company</label>
+            <input id="f-company" type="text" name="company" placeholder="Acme Corp" />
           </div>
           <div class="form-field">
-            <label>Service of Interest</label>
-            <select>
+            <label for="f-service">Service of Interest</label>
+            <select id="f-service" name="service">
               <option value="">Select a practice area</option>
               <option>Corporate Strategy</option>
               <option>Operations Excellence</option>
               <option>Digital Transformation</option>
-              <option>M&A Advisory</option>
+              <option>M&amp;A Advisory</option>
               <option>Organizational Design</option>
               <option>Risk &amp; Compliance</option>
               <option>Not sure — need guidance</option>
             </select>
           </div>
           <div class="form-field">
-            <label>Tell us about your challenge</label>
-            <textarea rows="4" placeholder="Briefly describe what you're looking to solve…"></textarea>
+            <label for="f-message">Tell us about your challenge</label>
+            <textarea id="f-message" name="message" rows="4" placeholder="Briefly describe what you're looking to solve…" required></textarea>
           </div>
-          <button class="btn-submit" type="button" onclick="handleSubmit(this)">Send Message →</button>
+
+          <button class="btn-submit" id="submit-btn" type="submit">Send Message →</button>
           <p class="form-note">All enquiries are treated with strict confidentiality.</p>
+        </form>
+
+        <!-- Success state (hidden by default) -->
+        <div id="form-success" style="display:none; padding:2.8rem 2.4rem; border:1px solid rgba(255,255,255,.12); border-radius:2px; text-align:center;">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5" style="margin-bottom:1.2rem;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <p style="font-family:var(--ff-display); font-size:1.6rem; font-weight:300; color:var(--white); margin-bottom:.7rem;">Message received.</p>
+          <p style="font-size:.88rem; color:rgba(255,255,255,.55); line-height:1.75;">Thank you for reaching out. A member of our team will be in touch within one business day.</p>
+        </div>
+
+        <!-- Error state (hidden by default) -->
+        <div id="form-error" style="display:none; padding:1.2rem 1.4rem; border:1px solid rgba(220,80,60,.4); border-radius:2px; margin-top:1rem;">
+          <p style="font-size:.88rem; color:#f5896a;">Something went wrong — please try again or email us directly at <a href="mailto:hello@consulttica.com" style="color:var(--gold-lt);">hello@consulttica.com</a>.</p>
         </div>
       </div>
     </div>
@@ -952,15 +982,44 @@
     if (rect.top < window.innerHeight) el.classList.add('visible');
   });
 
-  // Form submit
-  function handleSubmit(btn) {
-    btn.textContent = 'Sending…';
-    btn.disabled = true;
-    setTimeout(() => {
-      btn.textContent = 'Message Sent ✓';
-      btn.style.background = '#3b7a30';
-    }, 1200);
-  }
+  // ── Formspree AJAX submission ──
+  const form      = document.getElementById('contact-form');
+  const submitBtn = document.getElementById('submit-btn');
+  const successEl = document.getElementById('form-success');
+  const errorEl   = document.getElementById('form-error');
+
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    errorEl.style.display = 'none';
+
+    // Client-side required-field check
+    if (!form.checkValidity()) { form.reportValidity(); return; }
+
+    submitBtn.textContent = 'Sending…';
+    submitBtn.disabled = true;
+
+    try {
+      const data = new FormData(form);
+      const res  = await fetch(form.action, {
+        method:  'POST',
+        body:    data,
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (res.ok) {
+        form.style.display      = 'none';
+        successEl.style.display = 'block';
+      } else {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.error || 'Server error');
+      }
+    } catch (err) {
+      errorEl.style.display   = 'block';
+      submitBtn.textContent   = 'Send Message →';
+      submitBtn.disabled      = false;
+      console.error('Form error:', err);
+    }
+  });
 </script>
 </body>
 </html>
